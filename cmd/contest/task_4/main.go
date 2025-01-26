@@ -53,10 +53,6 @@ func scanArea(beginRow int, beginCol int, endRow, endCol int, field [][]byte, m 
 
 				name := readBoxName(i, j, boxEndCol, field)
 				m[name] = val
-				/*scanArea(i, boxEndCol+1, boxEndRow, endCol, field, m)
-				scanArea(i+1, beginCol, boxEndRow, j-1, field, m)
-				i = boxEndRow
-				break*/
 			}
 		}
 	}
