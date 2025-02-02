@@ -35,42 +35,85 @@ func doTask(reader io.Reader, writer io.Writer) {
 
 }
 
-func calcDuplicates(words []string) int {
-	amount := 0
+func calcDuplicates(words []string) uint {
+	amount := uint(0)
+	evenGroups := make(map[uint]uint32)
+	oddGroups := make(map[uint]uint32)
+	groups := make(map[uint]uint32)
 
 	for i := 0; i < len(words); i++ {
-		evenChars := getChars(words[i], 0, 2)
-		oddChars := getChars(words[i], 1, 2)
+		evenAmount := (len(words[i]) + 1) / 2
+		oddAmount := len(words[i]) / 2
+		evenKey := buildKey(i, words, evenAmount, 0, 2)
+		oddKey := buildKey(i, words, oddAmount, 1, 2)
+		key := buildKey(i, words, oddAmount, 0, 1)
 
-		for j := i + 1; j < len(words); j++ {
-			evenCharsOther := getChars(words[j], 0, 2)
-			if len(evenChars) == len(evenCharsOther) && evenChars == evenCharsOther {
-				amount++
-				continue
-			}
-
-			oddCharsOther := getChars(words[j], 1, 2)
-			if len(oddChars) > 0 && len(oddChars) == len(oddCharsOther) && oddChars == oddCharsOther {
-				amount++
-			}
+		if evenKey > 0 {
+			evenGroups[evenKey]++
 		}
+
+		if oddKey > 0 {
+			oddGroups[oddKey]++
+		}
+
+		if key > 0 {
+			groups[key]++
+		}
+	}
+
+	for _, count := range evenGroups {
+		amount += uint(calcCombinations(count, 2))
+	}
+
+	for _, count := range oddGroups {
+		amount += uint(calcCombinations(count, 2))
+	}
+
+	for _, count := range groups {
+		amount -= uint(calcCombinations(count, 2))
 	}
 
 	return amount
 }
 
-func getChars(s string, offset int, delta int) string {
-	b := strings.Builder{}
-	b.Grow(len(s) / 2)
-
-	for i := offset; i < len(s); i += delta {
-		b.WriteByte(s[i])
+func calcCombinations(n uint32, k uint32) uint32 {
+	if n < k {
+		return 0
 	}
 
-	return b.String()
+	return n * (n - 1) / k
 }
 
-func printResult(out *bufio.Writer, res int) {
+const (
+	firstChar   = 'a'
+	charsAmount = 26
+)
+
+func calcMaskAndSum(s *string, offset int, step int) (mask uint, sum uint) {
+	for i := offset; i < len(*s); i += step {
+		setBit(&mask, (*s)[i]-firstChar)
+		val := uint((*s)[i]) + uint(i)
+		sum += val * val
+	}
+	return
+}
+
+func setBit(x *uint, index uint8) {
+	*x |= 1 << index
+}
+
+func buildKey(wordIndex int, words []string, amount int, offset int, step int) uint {
+	if amount == 0 {
+		return 0
+	}
+
+	mask, sum := calcMaskAndSum(&words[wordIndex], offset, step)
+	key := sum << charsAmount
+	key |= mask
+	return key
+}
+
+func printResult(out *bufio.Writer, res uint) {
 	fmt.Fprintln(out, fmt.Sprintf("%d", res))
 }
 
